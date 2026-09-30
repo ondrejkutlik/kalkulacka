@@ -1,11 +1,3 @@
-"""Kalkulačka – grafická verzia (tkinter).
-
-Python prepis webovej aplikácie kalkulacka.html.
-Stavový automat bez použitia eval(). Ovládanie myšou aj klávesnicou
-(číslice, + - * /, Enter alebo =, Backspace, Esc, bodka alebo čiarka).
-Spustenie:  python kalkulacka_gui.py
-"""
-
 import math
 import tkinter as tk
 import tkinter.font as tkfont
@@ -109,7 +101,6 @@ class Kalkulacka(tk.Tk):
         t.bind("<Leave>", lambda e: t.config(bg=bg))
         return t
 
-    # ---------- zobrazenie ----------
     def nastav_vysledok(self, text):
         """Zobrazí text a v prípade potreby zmenší písmo, aby sa číslo zmestilo."""
         velkost = 30
@@ -134,7 +125,6 @@ class Kalkulacka(tk.Tk):
         self.historia.config(text="")
         self.nastav_vysledok(sprava)
 
-    # ---------- akcie ----------
     def zadaj_cislicu(self, c):
         if self.aktualne == "Chyba":
             self.aktualne = "0"
@@ -217,7 +207,6 @@ class Kalkulacka(tk.Tk):
         self.aktualne = a[1:] if a.startswith("-") else "-" + a
         self.zobraz()
 
-    # ---------- klávesnica ----------
     def klavesnica(self, e):
         if e.char.isdigit():
             self.zadaj_cislicu(e.char)
