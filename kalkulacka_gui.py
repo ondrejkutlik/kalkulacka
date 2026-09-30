@@ -4,35 +4,36 @@ import tkinter.font as tkfont
 
 SYMBOLY = {"+": "+", "-": "−", "*": "×", "/": "÷"}
 MAX_DLZKA = 12
-SIRKA_DISPLEJA = 290  # px, na zmenšovanie písma
+SIRKA_DISPLEJA = 290  # V pixeloch, podľa nej sa zmenšuje písmo
 
 FARBY = {
-    "bg": "#f2f4f7", "surface": "#ffffff", "ink": "#172033", "muted": "#5a6478",
-    "key": "#e6e9f0", "key_hover": "#d8dce7", "accent": "#1f4bd8", "accent_ink": "#ffffff",
+    "pozadie": "#f2f4f7", "panel": "#ffffff", "text": "#172033", "sive": "#5a6478",
+    "klaves": "#e6e9f0", "klaves_nad": "#d8dce7",
+    "akcent": "#1f4bd8", "akcent_nad": "#3a63e6", "akcent_text": "#ffffff",
 }
 
 
-def vypocitaj(a, b, op):
+def vypocitaj(a, b, operator):
     a, b = float(a), float(b)
-    if op == "+":
+    if operator == "+":
         vysledok = a + b
-    elif op == "-":
+    elif operator == "-":
         vysledok = a - b
-    elif op == "*":
+    elif operator == "*":
         vysledok = a * b
-    elif op == "/":
+    elif operator == "/":
         if b == 0:
-            raise ZeroDivisionError("Delenie nulou")
+            raise ZeroDivisionError("Delenie nulou nie je možné.")
         vysledok = a / b
     else:
-        raise ValueError(f"Neznáma operácia: {op}")
+        raise ValueError(f"Neznáma operácia: {operator}")
     if not math.isfinite(vysledok):
-        raise OverflowError("Výsledok je príliš veľký")
+        raise OverflowError("Výsledok je príliš veľký.")
     return vysledok
 
 
+# Odstráni chyby zaokrúhľovania (0.1 + 0.2 = 0.3) a zbytočné .0
 def formatuj(cislo):
-    """Odstráni chyby zaokrúhľovania (0.1 + 0.2 -> 0.3) a zbytočné .0."""
     cislo = float(f"{cislo:.12g}")
     if cislo.is_integer() and abs(cislo) < 1e15:
         return str(int(cislo))
@@ -44,26 +45,26 @@ class Kalkulacka(tk.Tk):
         super().__init__()
         self.title("Kalkulačka")
         self.resizable(False, False)
-        self.configure(bg=FARBY["bg"], padx=16, pady=16)
+        self.configure(bg=FARBY["pozadie"], padx=16, pady=16)
 
-        self.aktualne = "0"       # číslo, ktoré sa práve píše (ako text)
+        self.aktualne = "0"  # Číslo, ktoré sa práve píše, ako text
         self.predchadzajuce = None
         self.operator = None
-        self.prepis = False       # True = ďalšia číslica začne nové číslo
+        self.prepis = False  # Ďalšia číslica začne nové číslo
 
-        ram = tk.Frame(self, bg=FARBY["surface"], padx=14, pady=14)
+        ram = tk.Frame(self, bg=FARBY["panel"], padx=14, pady=14)
         ram.pack()
 
         # Displej
-        self.historia = tk.Label(ram, text="", anchor="e", bg=FARBY["surface"],
-                                 fg=FARBY["muted"], font=("Segoe UI", 11))
+        self.historia = tk.Label(ram, text="", anchor="e", bg=FARBY["panel"],
+                                 fg=FARBY["sive"], font=("Segoe UI", 11))
         self.historia.grid(row=0, column=0, columnspan=4, sticky="ew")
         self.pismo = tkfont.Font(family="Segoe UI", size=30, weight="bold")
-        self.vysledok = tk.Label(ram, text="0", anchor="e", bg=FARBY["surface"],
-                                 fg=FARBY["ink"], font=self.pismo, width=1)
+        self.vysledok = tk.Label(ram, text="0", anchor="e", bg=FARBY["panel"],
+                                 fg=FARBY["text"], font=self.pismo, width=1)
         self.vysledok.grid(row=1, column=0, columnspan=4, sticky="ew", pady=(0, 10))
 
-        # Tlačidlá: (text, akcia, typ)
+        # Tlačidlá ako (text, akcia, typ)
         rozlozenie = [
             [("C", self.vymaz, "funkcia"), ("⌫", self.spat, "funkcia"),
              ("%", self.percento, "funkcia"), ("÷", lambda: self.vyber_operator("/"), "operator")],
@@ -78,22 +79,22 @@ class Kalkulacka(tk.Tk):
         ]
         for r, riadok in enumerate(rozlozenie, start=2):
             for c, (text, akcia, typ) in enumerate(riadok):
-                if akcia is None:  # číslica
+                if akcia is None:  # Číslica
                     akcia = lambda t=text: self.zadaj_cislicu(t)
-                self._tlacidlo(ram, text, akcia, typ).grid(row=r, column=c, padx=3, pady=3)
+                self.vytvor_tlacidlo(ram, text, akcia, typ).grid(row=r, column=c, padx=3, pady=3)
 
         self.bind("<Key>", self.klavesnica)
         self.zobraz()
 
-    def _tlacidlo(self, rodic, text, akcia, typ):
-        bg, fg, hover = FARBY["key"], FARBY["ink"], FARBY["key_hover"]
+    def vytvor_tlacidlo(self, rodic, text, akcia, typ):
+        bg, fg, hover = FARBY["klaves"], FARBY["text"], FARBY["klaves_nad"]
         vaha = "normal"
         if typ == "operator":
-            fg, vaha = FARBY["accent"], "bold"
+            fg, vaha = FARBY["akcent"], "bold"
         elif typ == "funkcia":
-            fg = FARBY["muted"]
+            fg = FARBY["sive"]
         elif typ == "rovna":
-            bg, fg, hover, vaha = FARBY["accent"], FARBY["accent_ink"], "#3a63e6", "bold"
+            bg, fg, hover, vaha = FARBY["akcent"], FARBY["akcent_text"], FARBY["akcent_nad"], "bold"
         t = tk.Button(rodic, text=text, command=akcia, width=4, height=2, bd=0, relief="flat",
                       bg=bg, fg=fg, activebackground=hover, activeforeground=fg,
                       font=("Segoe UI", 15, vaha), cursor="hand2")
@@ -101,8 +102,8 @@ class Kalkulacka(tk.Tk):
         t.bind("<Leave>", lambda e: t.config(bg=bg))
         return t
 
+    # Ak sa číslo nezmestí, zmenší písmo
     def nastav_vysledok(self, text):
-        """Zobrazí text a v prípade potreby zmenší písmo, aby sa číslo zmestilo."""
         velkost = 30
         self.pismo.configure(size=velkost)
         while self.pismo.measure(text) > SIRKA_DISPLEJA and velkost > 10:
@@ -145,17 +146,17 @@ class Kalkulacka(tk.Tk):
             self.aktualne += "."
         self.zobraz()
 
-    def vyber_operator(self, op):
+    def vyber_operator(self, operator):
         if self.aktualne == "Chyba":
             return
-        # Reťazenie: 2 + 3 × ... vyhodnotí najprv 2 + 3
+        # Pri reťazení 2 + 3 x ... sa najprv vyhodnotí 2 + 3
         if self.operator and not self.prepis:
             try:
                 self.aktualne = formatuj(vypocitaj(self.predchadzajuce, self.aktualne, self.operator))
             except (ZeroDivisionError, OverflowError):
                 return self.chyba()
         self.predchadzajuce = self.aktualne
-        self.operator = op
+        self.operator = operator
         self.prepis = True
         self.zobraz()
 
